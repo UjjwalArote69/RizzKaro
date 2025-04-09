@@ -19,7 +19,7 @@ const Login = () => {
       // console.log("Entering try block");
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}api/auth/login`,
+        `https://rizzkaro.onrender.com/api/auth/login`,
         userData
       );
       // console.log("Response:", response);

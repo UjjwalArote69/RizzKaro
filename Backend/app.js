@@ -8,7 +8,12 @@ connectDB();
 
 const app = express();
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: "https://rizz-karo.vercel.app",
+    credentials: true, // if you're using cookies or sessions
+  })
+);
 app.use(express.json());
 
 // Routes

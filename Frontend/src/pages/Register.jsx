@@ -18,7 +18,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        `${https://rizzkaro.onrender.com/api/auth/register`,
+        `${https://rizzkaro.onrender.com/api/auth/register}`,
         userData
       );
       if (response.status === 201) {

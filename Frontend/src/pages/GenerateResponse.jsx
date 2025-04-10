@@ -21,7 +21,7 @@ const GenerateResponse = () => {
 
       const response = await axios.post(
         `https://rizzkaro.onrender.com/api/reply`,
-        { prompt, type },
+        { inputText: prompt, type },
         {
           headers: {
             Authorization: `Bearer ${token}`,

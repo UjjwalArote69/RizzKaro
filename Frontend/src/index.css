@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import 'remixicon/fonts/remixicon.css';
+
+@layer components {
+  .input {
+    @apply w-full px-4 py-2 rounded-md bg-gray-700 text-white focus:outline-none;
+  }
+  .btn-primary {
+    @apply w-full bg-blue-600 hover:bg-blue-700 transition-all py-2 rounded-md font-semibold;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops));
+  }
+
+  .bg-gradient-conic {
+    background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+

@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsOptions));
 // Routes
-app.use("/api/users", userRoutes);
+app.use("/users", userRoutes);
 app.use("/api/reply", replyRoutes);
 
 app.get("/", (req, res) => {

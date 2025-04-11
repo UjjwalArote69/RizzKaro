@@ -17,7 +17,7 @@ const GenerateResponse = () => {
       const token = JSON.parse(localStorage.getItem("user"))?.token;
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/reply/generate-reply`,
+        `${import.meta.env.VITE_API_URL}/api/reply/generate-reply`,
         { inputText, type },
         {
           headers: {

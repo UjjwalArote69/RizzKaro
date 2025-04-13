@@ -1,117 +1,139 @@
-import { useState } from 'react';
-// import { motion } from 'framer-motion';
-import { Search, Bell, Plus, Home, MessageCircle, User } from 'lucide-react';
-// import { Card, CardContent } from "../components/ui/card";
-import Navbar from '../components/Shared/Navbar';
-
-const stories = [
-  { id: 1, img: '/your-story.jpg', name: 'Your Story' },
-  { id: 2, img: '/story-2.jpg' },
-  { id: 3, img: '/story-3.jpg' },
-  { id: 4, img: '/story-4.jpg' },
-  { id: 5, img: '/story-5.jpg' },
-];
-
-const posts = [
-  {
-    id: 1,
-    user: 'Nilesh',
-    time: '1h ago',
-    content:
-      "Discover adventure in patagonia’s peaks or serenity provence’s @hamlets – arrival",
-    images: ['/post1.jpg', '/post2.jpg', '/post3.jpg'],
-  },
-];
+import { useState, useEffect, useContext } from "react";
+import axios from "axios";
+import { UserDataContext } from "../context/UserDataContext";
+import PostCard from "../components/PostCard";
+import Navbar from "../components/Shared/Navbar";
+import { toast } from "react-hot-toast";
+import { Sparkles, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState('Discover');
+  const [activeTab, setActiveTab] = useState("discover");
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { user } = useContext(UserDataContext);
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const endpoint =
+          activeTab === "discover" ? "/posts/discover" : "/posts/following";
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Please login to view posts");
+        }
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}${endpoint}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setPosts(res.data);
+      } catch (err) {
+        console.error("Failed to fetch posts:", err);
+        const errorMessage =
+          err.response?.data?.message || err.message || "Failed to load posts";
+        toast.error(errorMessage);
+
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.token) {
+      fetchPosts();
+    }
+  }, [activeTab, user?.token, navigate]);
+
+  // Rest of your component remains the same...
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-100 to-white  space-y-4">
-      {/* Topbar */}
-      <div className="flex items-center justify-between">
-        <div className="relative">
-          <Bell className="w-6 h-6" />
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full text-xs flex items-center justify-center">
-            3
+    <div className="relative min-h-screen pb-20">
+      {/* Background Elements */}
+      <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-pink-500 opacity-20 rounded-full blur-3xl animate-pulse -z-10" />
+      <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-indigo-500 opacity-20 rounded-full blur-3xl animate-pulse delay-1000 -z-10" />
+
+      {/* Main Content */}
+      <div className="relative z-10">
+        {/* Tabs */}
+        <div className="sticky top-0 bg-white/80 backdrop-blur-sm z-20 p-4 border-b border-gray-200 shadow-sm">
+          <div className="flex max-w-md mx-auto rounded-full bg-gray-100 p-1">
+            {["discover", "following"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 px-4 rounded-full text-sm font-medium flex items-center justify-center gap-1 transition-all ${
+                  activeTab === tab
+                    ? "bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab === "discover" ? (
+                  <Sparkles size={16} />
+                ) : (
+                  <Users size={16} />
+                )}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="w-10 h-10 rounded-full overflow-hidden">
-          <img src="/avatar.jpg" alt="User Avatar" className="object-cover w-full h-full" />
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-6 mt-4">
-        {['Discover', 'Following'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`text-lg font-semibold ${
-              activeTab === tab ? 'text-black' : 'text-gray-400'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Stories */}
-      <div className="flex space-x-4 overflow-x-auto py-2">
-        {stories.map((story, index) => (
-          <div key={story.id} className="w-16 flex-shrink-0 text-center">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-green-400">
-              <img
-                src={story.img}
-                alt={`Story ${index}`}
-                className="object-cover w-full h-full"
-              />
+        {/* Posts Feed */}
+        <div className="p-4 space-y-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-10 space-y-4">
+              <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-gray-600">Loading posts...</p>
             </div>
-            {story.name && <p className="text-xs mt-1">{story.name}</p>}
-          </div>
-        ))}
+          ) : posts.length > 0 ? (
+            posts.map((post) => (
+              <PostCard key={post._id} post={post} currentUserId={user?._id} />
+            ))
+          ) : (
+            <div className="text-center py-10">
+              <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-md max-w-md mx-auto">
+                <Sparkles size={40} className="mx-auto text-pink-500 mb-4" />
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  {activeTab === "discover"
+                    ? "No posts to discover yet"
+                    : "You're not following anyone yet"}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {activeTab === "discover"
+                    ? "Be the first to create a post!"
+                    : "Follow some users to see their posts"}
+                </p>
+                <button
+                  onClick={() =>
+                    navigate(
+                      activeTab === "discover"
+                        ? "/generate-response"
+                        : "/search-user"
+                    )
+                  }
+                  className="bg-gradient-to-r from-pink-500 to-indigo-500 text-white px-6 py-2 rounded-full font-medium hover:opacity-90 transition"
+                >
+                  {activeTab === "discover" ? "Create Post" : "Find Users"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Posts */}
-      <div className="space-y-4">
-        {/* {posts.map((post) => (
-          // <Card key={post.id} className="rounded-2xl p-4">
-          //   <CardContent>
-          //     <div className="flex items-center space-x-3 mb-2">
-          //       <div className="w-10 h-10 rounded-full overflow-hidden">
-          //         <img src="/avatar.jpg" alt="avatar" className="object-cover w-full h-full" />
-          //       </div>
-          //       <div>
-          //         <p className="font-semibold text-sm">{post.user}</p>
-          //         <p className="text-xs text-gray-500">Posted in u8s – {post.time}</p>
-          //       </div>
-          //     </div>
-          //     <p className="text-sm mb-3">
-          //       {post.content.split(/(\s@\w+)/g).map((word, i) => (
-          //         <span
-          //           key={i}
-          //           className={word.startsWith('@') ? 'text-green-600 font-medium' : ''}
-          //         >
-          //           {word}
-          //         </span>
-          //       ))}
-          //     </p>
-          //     <div className="grid grid-cols-3 gap-2">
-          //       {post.images.map((img, i) => (
-          //         <img
-          //           key={i}
-          //           src={img}
-          //           alt={`post-img-${i}`}
-          //           className="rounded-xl object-cover w-full h-24"
-          //         />
-          //       ))}
-          //     </div>
-          //   </CardContent>
-          // </Card>
-        ))} */}
-      </div>
-
-      <Navbar/>
+      <Navbar />
     </div>
   );
 }

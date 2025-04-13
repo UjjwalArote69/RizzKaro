@@ -18,7 +18,7 @@ const Login = () => {
 
     try {
       // console.log("Entering try block");
-      console.log(import.meta.env.VITE_API_URL);
+      // console.log(import.meta.env.VITE_API_URL);
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/users/login`,

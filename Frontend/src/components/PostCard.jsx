@@ -19,7 +19,7 @@ export default function PostCard({ post, currentUserId }) {
   const handleLike = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/posts/${post._id}/like`,
+        `${import.meta.env.VITE_API_URL}/posts/${post._id}/like`,
         {},
         {
           headers: { 

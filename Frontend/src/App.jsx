@@ -6,10 +6,10 @@ import Profile from "./pages/Profile";
 import GetStarted from "./pages/GetStarted";
 import GenerateResponse from "./pages/GenerateResponse";
 import ProtectedRoute from "./components/ProtectedRoute";
-// import { useContext } from "react";
-// import { UserDataContext } from "./context/UserDataContext";
 import { Toaster } from "react-hot-toast";
 import SearchUser from "./pages/SearchUser";
+import EditProfile from "./pages/EditProfile";
+import UpdatePassword from "./pages/UpdatePassword";
 
 const App = () => {
   // const {user} = useContext(UserDataContext);
@@ -19,7 +19,7 @@ const App = () => {
     <>
       <Toaster position="top-center" reverseOrder={false} />
       <Routes>
-        <Route path="/" element={<Login/>}/>
+        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route
@@ -49,9 +49,9 @@ const App = () => {
         <Route
           path="/profile"
           element={
-            <Profile>
+            <ProtectedRoute>
               <Profile />
-            </Profile>
+            </ProtectedRoute>
           }
         />
         <Route
@@ -59,6 +59,22 @@ const App = () => {
           element={
             <ProtectedRoute>
               <SearchUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-password"
+          element={
+            <ProtectedRoute>
+              <UpdatePassword />
             </ProtectedRoute>
           }
         />

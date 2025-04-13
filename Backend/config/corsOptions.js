@@ -1,6 +1,6 @@
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://rizz-karo.vercel.app'
+  'https://rizz-karo.vercel.com'
 ];
 
 const corsOptions = {

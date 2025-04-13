@@ -10,6 +10,12 @@ const GenerateResponse = () => {
   const [rizz, setRizz] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [caption, setCaption] = useState("");
+
+  const token = localStorage.getItem("token");
+  // console.log("Token:", token);
+  
 
   const handleGenerate = async () => {
     try {
@@ -17,7 +23,7 @@ const GenerateResponse = () => {
       const token = JSON.parse(localStorage.getItem("user"))?.token;
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/reply/generate-reply`,
+        `${import.meta.env.VITE_API_URL}/reply/generate-reply`,
         { inputText, type },
         {
           headers: {
@@ -41,6 +47,7 @@ const GenerateResponse = () => {
       }
 
       setRizz(response.data.reply);
+      // toast.success("!");
     } catch (error) {
       console.error("Error generating:", error);
       setRizz("❌ Oops! Something went wrong.");
@@ -56,15 +63,35 @@ const GenerateResponse = () => {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const handleShareToFeed = async () => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/posts`,
+        {
+          prompt: inputText,
+          response: rizz,
+          type,
+          caption,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Posted to your feed!");
+      setIsShareModalOpen(false);
+    } catch (error) {
+      console.log("Error sharing post:", error);
+      toast.error("Failed to share post");
+    }
+  };
+
   return (
     <div>
-      
       <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-pink-500 opacity-20 rounded-full blur-3xl animate-pulse -z-10" />
       <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-indigo-500 opacity-20 rounded-full blur-3xl animate-pulse delay-1000 -z-10" />
       <div className="absolute -top-20 right-1/3 w-[200px] h-[200px] bg-purple-500 opacity-20 rounded-full blur-2xl animate-spin-slow -z-10" />
-      
-      <div className="min-h-screen flex items-center justify-center  p-4 sm:p-8 pb-5">
 
+      <div className="min-h-screen flex items-center justify-center  p-4 sm:p-8 pb-5">
         <div className="w-full max-w-md sm:max-w-2xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6">
           <h1 className="text-2xl font-extrabold text-center text-purple-700 flex items-center justify-center gap-2">
             ✨ Rizz Generator
@@ -102,7 +129,11 @@ const GenerateResponse = () => {
           {rizz && (
             <div className="relative bg-purple-50 border border-purple-200 rounded-xl p-4 text-gray-800 shadow-inner transition-all">
               <h3 className="font-bold text-purple-700 mb-2">Your Output:</h3>
-              <p className="whitespace-pre-wrap leading-relaxed">{rizz}</p>
+              <div className="whitespace-pre-wrap leading-relaxed">
+                {rizz.split("\n").map((line, i) => (
+                  <p key={i}>{line || <br />}</p>
+                ))}
+              </div>
               <button
                 onClick={handleCopy}
                 className="absolute top-4 right-4 text-purple-600 hover:text-purple-800 transition"
@@ -114,6 +145,41 @@ const GenerateResponse = () => {
                   <ClipboardCopy size={20} />
                 )}
               </button>
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              >
+                Share to Feed
+              </button>
+            </div>
+          )}
+
+          {/* Share Modal */}
+          {isShareModalOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-xl max-w-md w-full">
+                <h3 className="text-xl font-bold mb-4">Share to Feed</h3>
+                <textarea
+                  placeholder="Add a caption (optional)"
+                  className="w-full p-2 border rounded mb-4"
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setIsShareModalOpen(false)}
+                    className="px-4 py-2 border rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleShareToFeed}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    Post
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

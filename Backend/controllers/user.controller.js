@@ -1,5 +1,8 @@
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
 // Register a new user✅
 module.exports.registerUser = async (req, res) => {
@@ -97,7 +100,7 @@ module.exports.followUser = async (req, res) => {
 
     console.log("Current User ID:", currentUserId);
     console.log("Target User ID:", targetUserId);
-    
+
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
       return res.status(400).json({ message: "Invalid user ID" });
@@ -131,7 +134,6 @@ module.exports.followUser = async (req, res) => {
 };
 
 // 🧿 Unfollow a user
-
 module.exports.unfollowUser = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -207,7 +209,7 @@ module.exports.getUserByUsername = async (req, res) => {
     const user = await User.findOne({ username }).select("-password");
 
     console.log("User found:", user);
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -216,5 +218,112 @@ module.exports.getUserByUsername = async (req, res) => {
   } catch (error) {
     console.error("Search user error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports.updateUserProfile = async (req, res) => {
+  try {
+    const { fullname, username, email, avatar } = req.body;
+    const userId = req.user._id;
+
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+      _id: { $ne: userId },
+    });
+
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "Username or email already exists" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        "fullname.firstname": fullname.firstname,
+        "fullname.lastname": fullname.lastname,
+        username,
+        email,
+        avatar,
+      },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId).select("+password");
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    const hashedPassword = await User.hashPassword(newPassword); // Use the static method to hash the new password
+    user.password = hashedPassword;
+    await user.save();
+
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password; // Remove password before sending response
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Update password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports.updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "avatars",
+      width: 500,
+      height: 500,
+      crop: "fill",
+    });
+
+    // Delete temp file
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error("Error deleting temp file:", err);
+    });
+
+    // Update user avatar
+    const user = await User.findById(req.user._id);
+
+    if (user.avatar) {
+      const publicId = user.avatar.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`avatars/${publicId}`);
+    }
+
+    user.avatar = result.secure_url;
+    await user.save();
+
+    res.status(200).json({
+      message: "Avatar updated successfully",
+      avatar: user.avatar,
+    });
+  } catch (error) {
+    console.error("Avatar upload error:", error);
+    res.status(500).json({ message: "Failed to update avatar" });
   }
 };

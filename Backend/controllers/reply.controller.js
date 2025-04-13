@@ -1,5 +1,6 @@
 const generateGeminiReply = require("../utils/generateGeminiReply");
-const User = require("../models/user.model"); // 👈 Add this line
+const User = require("../models/user.model");
+const Post = require("../models/post.model");
 
 module.exports.generateReply = async (req, res) => {
   try {
@@ -7,16 +8,16 @@ module.exports.generateReply = async (req, res) => {
     console.log("📥 inputText:", inputText);
     console.log("📥 type:", type);
 
+    // 1. Generate reply from Gemini
     let reply = await generateGeminiReply(inputText, type);
     console.log("Gemini full reply:", reply);
+
     if (!reply || reply.length < 5) {
       reply = "Couldn't generate a fun reply. Try again!";
     }
 
-    // Extract only lines that look like proper replies (skip headings like **Funny**, etc.)
+    // 2. Process the reply
     const lines = reply.split("\n").map((line) => line.trim());
-
-    // Filter for bullet-style replies or quotes
     const responseLines = lines.filter(
       (line) =>
         line.startsWith("* ") ||
@@ -24,16 +25,29 @@ module.exports.generateReply = async (req, res) => {
         line.startsWith('"') ||
         /^[a-zA-Z0-9]/.test(line)
     );
-
-    // Choose the first valid line, or a fallback message
     reply = responseLines[0] || "Couldn't generate a fun reply. Try again!";
-    reply = String(reply).replace(/^"|"$/g, ""); // Remove extra quotes
+    reply = String(reply).replace(/^"|"$/g, "");
 
+    // 3. Save to user's replies
     const user = await User.findById(req.user._id);
     user.replies.push({ input: inputText, type, reply });
     await user.save();
 
-    res.status(200).json({ reply });
+    // 4. Create a new post
+    const post = await Post.create({
+      user: req.user._id,
+      prompt: inputText,
+      response: reply,
+      type,
+    });
+
+    // 5. Send single response
+    res.status(200).json({
+      reply,
+      id: post._id,
+      prompt: post.prompt,
+      response: post.response,
+    });
   } catch (error) {
     console.error("🔥 Error in /reply:", error);
     res.status(500).json({ error: "Failed to generate reply" });

@@ -14,8 +14,6 @@ const GenerateResponse = () => {
   const [caption, setCaption] = useState("");
 
   const token = localStorage.getItem("token");
-  // console.log("Token:", token);
-  
 
   const handleGenerate = async () => {
     try {
@@ -47,7 +45,6 @@ const GenerateResponse = () => {
       }
 
       setRizz(response.data.reply);
-      // toast.success("!");
     } catch (error) {
       console.error("Error generating:", error);
       setRizz("❌ Oops! Something went wrong.");
@@ -65,7 +62,7 @@ const GenerateResponse = () => {
 
   const handleShareToFeed = async () => {
     try {
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts`,
         {
           prompt: inputText,
@@ -79,9 +76,10 @@ const GenerateResponse = () => {
       );
       toast.success("Posted to your feed!");
       setIsShareModalOpen(false);
+      setCaption("");
     } catch (error) {
-      console.log("Error sharing post:", error);
-      toast.error("Failed to share post");
+      console.error("Error sharing post:", error);
+      toast.error(error.response?.data?.message || "Failed to share post");
     }
   };
 
@@ -91,7 +89,7 @@ const GenerateResponse = () => {
       <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-indigo-500 opacity-20 rounded-full blur-3xl animate-pulse delay-1000 -z-10" />
       <div className="absolute -top-20 right-1/3 w-[200px] h-[200px] bg-purple-500 opacity-20 rounded-full blur-2xl animate-spin-slow -z-10" />
 
-      <div className="min-h-screen flex items-center justify-center  p-4 sm:p-8 pb-5">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 pb-5">
         <div className="w-full max-w-md sm:max-w-2xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6">
           <h1 className="text-2xl font-extrabold text-center text-purple-700 flex items-center justify-center gap-2">
             ✨ Rizz Generator
@@ -146,7 +144,10 @@ const GenerateResponse = () => {
                 )}
               </button>
               <button
-                onClick={() => setIsShareModalOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsShareModalOpen(true);
+                }}
                 className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
               >
                 Share to Feed
@@ -156,8 +157,14 @@ const GenerateResponse = () => {
 
           {/* Share Modal */}
           {isShareModalOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <div 
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              onClick={() => setIsShareModalOpen(false)}
+            >
+              <div 
+                className="bg-white p-6 rounded-xl max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <h3 className="text-xl font-bold mb-4">Share to Feed</h3>
                 <textarea
                   placeholder="Add a caption (optional)"
@@ -173,7 +180,10 @@ const GenerateResponse = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={handleShareToFeed}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await handleShareToFeed();
+                    }}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                   >
                     Post

@@ -1,7 +1,7 @@
 const allowedOrigins = [
   'http://localhost:5173',
   'https://rizz-karo.vercel.app',
-  'https://rizzkaro.onrender.com'
+  'rizzkaro-production.up.railway.app'
 ];
 
 const corsOptions = {

@@ -32,7 +32,7 @@ module.exports.registerUser = async (req, res) => {
         username: newUser.username,
         fullname: newUser.fullname,
         email: newUser.email,
-        token,
+        token: jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
       },
     });
   } catch (error) {
@@ -78,7 +78,7 @@ module.exports.loginUser = async (req, res) => {
         fullname: user.fullname,
         username: user.username,
         email: user.email,
-        token,
+        token: jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
       },
     });
   } catch (err) {
